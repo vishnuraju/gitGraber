@@ -60,7 +60,7 @@ def elasticFeed(token, tokenResult, rawGitUrl):
 	data={}
 	data = {'Token Category':tokenResult,'Token':token,'Url':rawGitUrl}
 	jsonData = json.dumps(data, ensure_ascii=False)
-	res = es.index(index='bughunt', ignore=400, doc_type='docket', id=1, body=json.loads(jsonData))
+	res = es.index(index='bughunt', ignore=400, doc_type='docket', body=json.loads(jsonData))
 
 def displayResults(result, tokenResult, rawGitUrl):
     possibleTokenString = '[!] POSSIBLE '+tokenResult[result]+' TOKEN FOUND (keyword used:'+githubQuery+')'
