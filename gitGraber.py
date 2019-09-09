@@ -11,6 +11,7 @@ import config
 import tokens
 import os
 from termcolor import colored
+from elasticsearch import Elasticsearch
 
 def createEmptyBinaryFile(name):
     f = open(name, 'wb')
@@ -55,6 +56,12 @@ def writeToWordlist(content, wordlist):
     if s.find(bytes(filename,'utf-8')) == -1:
         f.write(filename + '\n')
 
+def elasticFeed(token, tokenResult, rawGitUrl):
+	data={}
+	data = {'Token Category':tokenResult,'Token':token,'Url':rawGitUrl}
+	jsonData = json.dumps(data, ensure_ascii=False)
+	res = es.index(index='bughunt', ignore=400, doc_type='docket', id=1, body=json.loads(jsonData))
+
 def displayResults(result, tokenResult, rawGitUrl):
     possibleTokenString = '[!] POSSIBLE '+tokenResult[result]+' TOKEN FOUND (keyword used:'+githubQuery+')'
     print(colored(possibleTokenString,'green'))
@@ -63,6 +70,7 @@ def displayResults(result, tokenResult, rawGitUrl):
     clean_token = re.sub(tokens.CLEAN_TOKEN_STEP1, '', result.group(0))
     clean_token = re.sub(tokens.CLEAN_TOKEN_STEP2, '', clean_token)
     tokenString = '[+] Token : ' + clean_token
+    elasticFeed(clean_token, tokenResult[result], str(rawGitUrl))
     print(tokenString)
     return possibleTokenString+'\n'+urlString+'\n'+tokenString
 
@@ -104,8 +112,7 @@ def requestGithub(keywordsFile, args):
                     'Authorization': 'token ' + token
                 }
                 try:
-					time.sleep(4)
-                    response = requests.get(config.GITHUB_API_URL + githubQuery +' '+keyword.strip() +config.GITHUB_SEARCH_PARAMS, headers=headers)
+                    time.sleep(4);response = requests.get(config.GITHUB_API_URL + githubQuery +' '+keyword.strip() +config.GITHUB_SEARCH_PARAMS, headers=headers)
                     print('[i] Status code : ' + str(response.status_code))
                     if response.status_code == 200:
                         content = parseResults(response.text)
@@ -146,6 +153,7 @@ keywordsFile = args.keywordsFile
 githubQuery = args.query
 tokenMap = tokens.initTokensMap()
 tokensResult = []
+es = Elasticsearch()
 
 # If wordlist, check if file is binary initialized for mmap 
 if(args.wordlist):
