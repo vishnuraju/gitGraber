@@ -104,6 +104,7 @@ def requestGithub(keywordsFile, args):
                     'Authorization': 'token ' + token
                 }
                 try:
+					time.sleep(4)
                     response = requests.get(config.GITHUB_API_URL + githubQuery +' '+keyword.strip() +config.GITHUB_SEARCH_PARAMS, headers=headers)
                     print('[i] Status code : ' + str(response.status_code))
                     if response.status_code == 200:
